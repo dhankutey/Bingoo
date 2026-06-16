@@ -13,7 +13,12 @@ function initGame(size) {
     const board = document.getElementById('board');
     board.innerHTML = '';
     
-    board.className = 'bingo-board ' + (gridSize === 5 ? 'board-5x5' : 'board-10x10');
+    // Set dynamic layout class based on size selection
+    let sizeClass = 'board-5x5';
+    if (gridSize === 7) sizeClass = 'board-7x7';
+    if (gridSize === 10) sizeClass = 'board-10x10';
+
+    board.className = 'bingo-board ' + sizeClass;
     board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
     const totalNumbers = gridSize * gridSize;
@@ -66,10 +71,12 @@ function handleCellClick(cell, row, col) {
 function countCompletedLines() {
     let lines = 0;
 
+    // Rows
     for (let r = 0; r < gridSize; r++) {
         if (boardState[r].every(cell => cell)) lines++;
     }
 
+    // Columns
     for (let c = 0; c < gridSize; c++) {
         let colWin = true;
         for (let r = 0; r < gridSize; r++) {
@@ -81,6 +88,7 @@ function countCompletedLines() {
         if (colWin) lines++;
     }
 
+    // Main Diagonal
     let mainDiagWin = true;
     for (let i = 0; i < gridSize; i++) {
         if (!boardState[i][i]) {
@@ -90,6 +98,7 @@ function countCompletedLines() {
     }
     if (mainDiagWin) lines++;
 
+    // Anti Diagonal
     let antiDiagWin = true;
     for (let i = 0; i < gridSize; i++) {
         if (!boardState[i][gridSize - 1 - i]) {
@@ -102,4 +111,7 @@ function countCompletedLines() {
     return lines;
 }
 
+// Start with a standard 5x5 board by default
 initGame(5);
+
+
