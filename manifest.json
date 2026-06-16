@@ -1,21 +1,17 @@
 {
   "short_name": "Bingo",
-  "name": "Dynamic PWA Bingo Game",
+  "name": "Dynamic Custom Bingo Game",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/3394/3394460.png",
       "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "icon.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#f0f2f5",
+  "background_color": "#ecf0f1",
+  "theme_color": "#4a90e2",
   "display": "standalone",
-  "theme_color": "#007bff"
+  "orientation": "portrait"
 }
-
