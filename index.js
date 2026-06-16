@@ -1,142 +1,124 @@
-Let gridSize = 5;
-Let boardState = [];
-Let gameOver = false;
+let size = 5;
+let gridMatrix = [];
+let selectedMatrix = [];
 
-Function initGame(size) {
-    gridSize = size;
-    gameOver = false;
-    document.getElementById(‘message’).textContent = ‘’;
+const gridSizeSelect = document.getElementById('gridSize');
+const winModal = document.getElementById('winModal');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const gridElement = document.getElementById('grid');
+
+gridSizeSelect.addEventListener('change', initGame);
+playAgainBtn.addEventListener('click', initGame);
+
+function initGame() {
+    size = parseInt(gridSizeSelect.value);
+    winModal.style.display = 'none';
     
-    const letters = document.querySelectorAll(‘.letter’);
-    letters.forEach(l => l.classList.remove(‘active’));
-
-    const board = document.getElementById(‘board’);
-    board.innerHTML = ‘’;
-    
-    // Set dynamic layout class based on size selection
-    Let sizeClass = ‘board-5x5’;
-    If (gridSize === 7) sizeClass = ‘board-7x7’;
-    If (gridSize === 10) sizeClass = ‘board-10x10’;
-
-    Board.className = ‘bingo-board ‘ + sizeClass;
-    Board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-
-    Const totalNumbers = gridSize * gridSize;
-    Const numbers = [];
-    For (let I = 1; I <= totalNumbers; i++) {
-        Numbers.push(i);
+    for(let i = 0; i < 5; i++) {
+        document.getElementById(`l-${i}`).classList.remove('glow');
     }
+
+    const maxNum = size * size;
+    const numbers = Array.from({length: maxNum}, (_, i) => i + 1);
     
-    Const shuffled = numbers.sort(() => 0.5 – Math.random());
-    boardState = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
-
-    for (let I = 0; I < totalNumbers; i++) {
-        const row = Math.floor(I / gridSize);
-        const col = I % gridSize;
-
-        const cell = document.createElement(‘div’);
-        cell.classList.add(‘cell’);
-        cell.textContent = shuffled[i];
-        cell.dataset.row = row;
-        cell.dataset.col = col;
-
-        cell.addEventListener(‘click’, () => handleCellClick(cell, row, col));
-        board.appendChild(cell);
+    for (let i = numbers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
     }
-}
 
-Function handleCellClick(cell, row, col) {
-    If (gameOver) return;
+    gridMatrix = [];
+    selectedMatrix = Array.from({length: size}, () => Array(size).fill(false));
+    
+    gridElement.innerHTML = '';
+    gridElement.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
 
-    // If the cell is already marked, handle the removal logic
-    If (boardState[row][col]) {
-        Const number = cell.textContent;
-        Const confirmRemove = confirm(`Are you sure you want to remove the mark from ${number}?`);
-        
-        If (confirmRemove) {
-            Cell.classList.remove(‘marked’);
-            boardState[row][col] = false;
+    const cellSize = size === 5 ? '60px' : size === 7 ? '45px' : '35px';
+    const fontSize = size === 5 ? '1.2rem' : size === 7 ? '1rem' : '0.8rem';
+
+    for (let r = 0; r < size; r++) {
+        gridMatrix[r] = [];
+        for (let c = 0; c < size; c++) {
+            const num = numbers[r * size + c];
+            gridMatrix[r][c] = num;
+
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerText = num;
+            cell.style.width = cellSize;
+            cell.style.height = cellSize;
+            cell.style.fontSize = fontSize;
             
-            // Recalculate line counts to update BINGO letters
-            Const completedLinesCount = countCompletedLines();
-            Const letters = document.querySelectorAll(‘.letter’);
-            Letters.forEach((letterSpan, index) => {
-                If (index < completedLinesCount) {
-                    letterSpan.classList.add(‘active’);
-                } else {
-                    letterSpan.classList.remove(‘active’);
-                }
-            });
+            cell.addEventListener('click', () => handleCellClick(r, c, cell));
+            gridElement.appendChild(cell);
         }
-        Return; // Stop processing further so it doesn’t get marked again immediately
-    }
-
-    // Normal marking logic for unmarked cells
-    Cell.classList.add(‘marked’);
-    boardState[row][col] = true;
-
-    const completedLinesCount = countCompletedLines();
-    
-    const letters = document.querySelectorAll(‘.letter’);
-    letters.forEach((letterSpan, index) => {
-        if (index < completedLinesCount) {
-            letterSpan.classList.add(‘active’);
-        } else {
-            letterSpan.classList.remove(‘active’);
-        }
-    });
-
-    If (completedLinesCount >= 5) {
-        Document.getElementById(‘message’).textContent = ‘Perfect Bingo! 🎉 Game Completed!’;
-        gameOver = true;
     }
 }
 
-Function countCompletedLines() {
-    Let lines = 0;
+function handleCellClick(r, c, cellElement) {
+    if (selectedMatrix[r][c]) {
+        const confirmRemove = confirm(`Are you sure you want to remove the selection for ${gridMatrix[r][c]}?`);
+        if (confirmRemove) {
+            selectedMatrix[r][c] = false;
+            cellElement.classList.remove('selected');
+            checkBingoLines();
+        }
+    } else {
+        selectedMatrix[r][c] = true;
+        cellElement.classList.add('selected');
+        checkBingoLines();
+    }
+}
 
-    // Rows
-    For (let r = 0; r < gridSize; r++) {
-        If (boardState[r].every(cell => cell)) lines++;
+function checkBingoLines() {
+    let lines = 0;
+
+    for (let r = 0; r < size; r++) {
+        if (selectedMatrix[r].every(val => val)) lines++;
     }
 
-    // Columns
-    For (let c = 0; c < gridSize; c++) {
-        Let colWin = true;
-        For (let r = 0; r < gridSize; r++) {
-            If (!boardState[r][c]) {
+    for (let c = 0; c < size; c++) {
+        let colWin = true;
+        for (let r = 0; r < size; r++) {
+            if (!selectedMatrix[r][c]) {
                 colWin = false;
                 break;
             }
         }
-        If (colWin) lines++;
+        if (colWin) lines++;
     }
 
-    // Main Diagonal
-    Let mainDiagWin = true;
-    For (let I = 0; I < gridSize; i++) {
-        If (!boardState[i][i]) {
-            mainDiagWin = false;
+    let diag1Win = true;
+    for (let i = 0; i < size; i++) {
+        if (!selectedMatrix[i][i]) {
+            diag1Win = false;
             break;
         }
     }
-    If (mainDiagWin) lines++;
+    if (diag1Win) lines++;
 
-    // Anti Diagonal
-    Let antiDiagWin = true;
-    For (let I = 0; I < gridSize; i++) {
-        If (!boardState[i][gridSize – 1 – i]) {
-            antiDiagWin = false;
+    let diag2Win = true;
+    for (let i = 0; i < size; i++) {
+        if (!selectedMatrix[i][size - 1 - i]) {
+            diag2Win = false;
             break;
         }
     }
-    If (antiDiagWin) lines++;
+    if (diag2Win) lines++;
 
-    Return lines;
+    for (let i = 0; i < 5; i++) {
+        const letterElement = document.getElementById(`l-${i}`);
+        if (i < lines) {
+            letterElement.classList.add('glow');
+        } else {
+            letterElement.classList.remove('glow');
+        }
+    }
+
+    if (lines >= 5) {
+        setTimeout(() => {
+            winModal.style.display = 'flex';
+        }, 300);
+    }
 }
 
-// Start with a standard 5x5 board by default
-initGame(5);
-
-
-
+window.onload = initGame;
