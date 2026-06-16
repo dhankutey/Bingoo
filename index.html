@@ -13,6 +13,7 @@
     
     <div class="controls">
         <button onclick="initGame(5)">New 5x5 Game (1-25)</button>
+        <button onclick="initGame(7)">New 7x7 Game (1-49)</button>
         <button onclick="initGame(10)">New 10x10 Game (1-100)</button>
     </div>
 
@@ -29,13 +30,14 @@
 
     <script src="index.js"></script>
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then((reg) => console.log('Service Worker registered successfully!', reg))
-        .catch((err) => console.log('Service Worker registration failed:', err));
-    });
-  }
-</script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('Service Worker registered successfully!', reg))
+                    .catch((err) => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
+
