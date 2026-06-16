@@ -1,42 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Bingo Game</title>
-    <link rel="stylesheet" href="index.css">
-    <link rel="manifest" href="./manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Game</title>
+  <link rel="stylesheet" href="index.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1565C0" />
 </head>
 <body>
 
-    <h1>Bingo Game</h1>
-    
-    <div class="controls">
-        <button onclick="initGame(5)">New 5x5 Game (1-25)</button>
-        <button onclick="initGame(7)">New 7x7 Game (1-49)</button>
-        <button onclick="initGame(10)">New 10x10 Game (1-100)</button>
+  <div id="undoModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <p>Undo mark on <strong id="undoNum"></strong>?</p>
+      <div class="modal-actions">
+        <button id="undoYes" class="btn-yes">Yes, Undo</button>
+        <button id="undoNo" class="btn-no">Cancel</button>
+      </div>
     </div>
+  </div>
 
-    <div class="bingo-tracker" id="tracker">
-        <span class="letter">B</span>
-        <span class="letter">I</span>
-        <span class="letter">N</span>
-        <span class="letter">G</span>
-        <span class="letter">O</span>
+  <header>
+    <h1>🎯 Bingo Game</h1>
+    <p class="subtitle">Mark numbers, complete lines, shout BINGO!</p>
+  </header>
+
+  <section class="controls">
+    <div class="control-group">
+      <span class="control-label">Grid Size</span>
+      <div class="btn-group">
+        <button class="size-btn active" data-size="5">5×5</button>
+        <button class="size-btn" data-size="7">7×7</button>
+        <button class="size-btn" data-size="10">10×10</button>
+      </div>
     </div>
+    <div class="control-group">
+      <span class="control-label">Win Mode</span>
+      <div class="btn-group">
+        <button class="mode-btn active" data-mode="bingo">BINGO (5 lines)</button>
+        <button class="mode-btn" data-mode="bingoo">BINGOO (6 lines)</button>
+      </div>
+    </div>
+    <button id="newGameBtn" class="new-game-btn">🔀 New Game</button>
+  </section>
 
-    <div id="board" class="bingo-board"></div>
-    <div id="message" class="message"></div>
+  <div class="bingo-letters" id="bingoLetters"></div>
 
-    <script src="index.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then((reg) => console.log('Service Worker registered successfully!', reg))
-                    .catch((err) => console.log('Service Worker registration failed:', err));
-            });
-        }
-    </script>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+    <span class="progress-text" id="progressText">0 lines completed</span>
+  </div>
+
+  <main>
+    <div id="board" class="board"></div>
+  </main>
+
+  <div id="winBanner" class="win-banner hidden">
+    <div class="win-content">
+      <div class="win-emoji">🎉</div>
+      <h2 id="winTitle">BINGO!</h2>
+      <p id="winSubtitle">Perfect Game Completed!</p>
+      <button id="playAgainBtn" class="new-game-btn">Play Again</button>
+    </div>
+  </div>
+
+  <footer class="stats-bar">
+    <span>Marked: <strong id="statMarked">0</strong></span>
+    <span>Lines: <strong id="statLines">0</strong></span>
+    <span>Needed: <strong id="statNeeded">5</strong></span>
+  </footer>
+
+  <script src="index.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>
