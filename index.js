@@ -26,7 +26,6 @@ function initGame(size) {
         numbers.push(i);
     }
     
-    // Shuffle numbers
     const shuffled = numbers.sort(() => 0.5 - Math.random());
     boardState = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
 
@@ -49,22 +48,22 @@ function handleCellClick(cell, row, col) {
     if (gameOver) return;
 
     if (boardState[row][col]) {
-        // Cell is already marked, prompt confirmation to remove
-        const confirmRemove = confirm(`Are you sure you want to remove the circle from ${cell.textContent}?`);
+        // If already marked, confirm before undoing the circle
+        const confirmRemove = confirm(`Are you sure you want to remove the selection for ${cell.textContent}?`);
         if (confirmRemove) {
             cell.classList.remove('marked');
             boardState[row][col] = false;
-            updateGameProgress();
+            updateTracking();
         }
     } else {
-        // Cell is clean, mark it down
+        // Mark cell
         cell.classList.add('marked');
         boardState[row][col] = true;
-        updateGameProgress();
+        updateTracking();
     }
 }
 
-function updateGameProgress() {
+function updateTracking() {
     const completedLinesCount = countCompletedLines();
     
     const letters = document.querySelectorAll('.letter');
@@ -77,10 +76,9 @@ function updateGameProgress() {
     });
 
     if (completedLinesCount >= 5) {
-        document.getElementById('message').textContent = 'Perfect Bingo! 🎉';
+        document.getElementById('message').textContent = 'Perfect Bingo! 🎉 Game Completed!';
         gameOver = true;
     } else {
-        // Clear message if lines fall below 5 due to unmarking a cell
         document.getElementById('message').textContent = '';
     }
 }
@@ -128,5 +126,4 @@ function countCompletedLines() {
     return lines;
 }
 
-// Auto-run standard board on launch
 initGame(5);
