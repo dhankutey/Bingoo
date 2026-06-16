@@ -50,6 +50,7 @@ button:hover {
 .letter.active {
     color: #dc3545;
     transform: scale(1.2);
+    text-shadow: 0 0 10px rgba(220, 53, 69, 0.6);
 }
 
 .bingo-board {
@@ -74,20 +75,15 @@ button:hover {
     transition: background-color 0.2s;
 }
 
+.cell:hover {
+    background-color: #dee2e6;
+}
+
+/* Sizing and marking rings for each layout */
 .board-5x5 .cell {
     width: 60px;
     height: 60px;
     font-size: 18px;
-}
-
-.board-10x10 .cell {
-    width: 45px;
-    height: 45px;
-    font-size: 14px;
-}
-
-.cell:hover {
-    background-color: #dee2e6;
 }
 
 .board-5x5 .cell.marked::after {
@@ -98,6 +94,28 @@ button:hover {
     border: 4px solid #dc3545;
     border-radius: 50%;
     pointer-events: none;
+}
+
+.board-7x7 .cell {
+    width: 52px;
+    height: 52px;
+    font-size: 16px;
+}
+
+.board-7x7 .cell.marked::after {
+    content: '';
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    border: 3.5px solid #dc3545;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.board-10x10 .cell {
+    width: 45px;
+    height: 45px;
+    font-size: 14px;
 }
 
 .board-10x10 .cell.marked::after {
@@ -117,3 +135,5 @@ button:hover {
     color: #28a745;
     height: 30px;
 }
+
+
