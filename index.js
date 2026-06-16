@@ -1,129 +1,184 @@
-let gridSize = 5;
-let boardState = [];
-let gameOver = false;
+const state = {
+  size: 5,
+  mode: 'bingo',
+  grid: [],
+  marked: new Set(),
+  lines: 0,
+  won: false,
+};
 
-function initGame(size) {
-    gridSize = size;
-    gameOver = false;
-    document.getElementById('message').textContent = '';
-    
-    const letters = document.querySelectorAll('.letter');
-    letters.forEach(l => l.classList.remove('active'));
+const boardEl      = document.getElementById('board');
+const bingoLetters = document.getElementById('bingoLetters');
+const progressBar  = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+const winBanner    = document.getElementById('winBanner');
+const winTitle     = document.getElementById('winTitle');
+const winSubtitle  = document.getElementById('winSubtitle');
+const undoModal    = document.getElementById('undoModal');
+const undoNum      = document.getElementById('undoNum');
+const undoYes      = document.getElementById('undoYes');
+const undoNo       = document.getElementById('undoNo');
+const statMarked   = document.getElementById('statMarked');
+const statLines    = document.getElementById('statLines');
+const statNeeded   = document.getElementById('statNeeded');
 
-    const board = document.getElementById('board');
-    board.innerHTML = '';
-    
-    let sizeClass = 'board-5x5';
-    if (gridSize === 7) sizeClass = 'board-7x7';
-    if (gridSize === 10) sizeClass = 'board-10x10';
-
-    board.className = 'bingo-board ' + sizeClass;
-    board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-
-    const totalNumbers = gridSize * gridSize;
-    const numbers = [];
-    for (let i = 1; i <= totalNumbers; i++) {
-        numbers.push(i);
-    }
-    
-    const shuffled = numbers.sort(() => 0.5 - Math.random());
-    boardState = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
-
-    for (let i = 0; i < totalNumbers; i++) {
-        const row = Math.floor(i / gridSize);
-        const col = i % gridSize;
-
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        cell.textContent = shuffled[i];
-        cell.dataset.row = row;
-        cell.dataset.col = col;
-
-        cell.addEventListener('click', () => handleCellClick(cell, row, col));
-        board.appendChild(cell);
-    }
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
-function handleCellClick(cell, row, col) {
-    if (gameOver) return;
-
-    if (boardState[row][col]) {
-        // If already marked, confirm before undoing the circle
-        const confirmRemove = confirm(`Are you sure you want to remove the selection for ${cell.textContent}?`);
-        if (confirmRemove) {
-            cell.classList.remove('marked');
-            boardState[row][col] = false;
-            updateTracking();
-        }
-    } else {
-        // Mark cell
-        cell.classList.add('marked');
-        boardState[row][col] = true;
-        updateTracking();
-    }
+function buildGrid(size) {
+  const nums = shuffle(Array.from({ length: size * size }, (_, i) => i + 1));
+  const grid = [];
+  for (let r = 0; r < size; r++) grid.push(nums.slice(r * size, r * size + size));
+  return grid;
 }
 
-function updateTracking() {
-    const completedLinesCount = countCompletedLines();
-    
-    const letters = document.querySelectorAll('.letter');
-    letters.forEach((letterSpan, index) => {
-        if (index < completedLinesCount) {
-            letterSpan.classList.add('active');
-        } else {
-            letterSpan.classList.remove('active');
-        }
-    });
-
-    if (completedLinesCount >= 5) {
-        document.getElementById('message').textContent = 'Perfect Bingo! 🎉 Game Completed!';
-        gameOver = true;
-    } else {
-        document.getElementById('message').textContent = '';
-    }
+function applyCellSize(size) {
+  const vw = Math.min(window.innerWidth, 780);
+  const gap = (size - 1) * 6;
+  let cell = Math.floor((vw - 24 - gap) / size);
+  cell = Math.max(cell, 28);
+  const font = cell < 38 ? '.65rem' : cell < 48 ? '.8rem' : cell < 58 ? '.95rem' : '1.1rem';
+  document.documentElement.style.setProperty('--cell-size', cell + 'px');
+  document.documentElement.style.setProperty('--font-size', font);
+  boardEl.style.gridTemplateColumns = `repeat(${size}, var(--cell-size))`;
 }
 
-function countCompletedLines() {
-    let lines = 0;
+const WORD_MAP = { bingo: 'BINGO', bingoo: 'BINGOO' };
 
-    // Rows
-    for (let r = 0; r < gridSize; r++) {
-        if (boardState[r].every(cell => cell)) lines++;
-    }
-
-    // Columns
-    for (let c = 0; c < gridSize; c++) {
-        let colWin = true;
-        for (let r = 0; r < gridSize; r++) {
-            if (!boardState[r][c]) {
-                colWin = false;
-                break;
-            }
-        }
-        if (colWin) lines++;
-    }
-
-    // Main Diagonal
-    let mainDiagWin = true;
-    for (let i = 0; i < gridSize; i++) {
-        if (!boardState[i][i]) {
-            mainDiagWin = false;
-            break;
-        }
-    }
-    if (mainDiagWin) lines++;
-
-    // Anti Diagonal
-    let antiDiagWin = true;
-    for (let i = 0; i < gridSize; i++) {
-        if (!boardState[i][gridSize - 1 - i]) {
-            antiDiagWin = false;
-            break;
-        }
-    }
-    if (antiDiagWin) lines++;
-
-    return lines;
+function buildLetters(mode) {
+  bingoLetters.innerHTML = '';
+  for (const ch of WORD_MAP[mode]) {
+    const span = document.createElement('span');
+    span.className = 'bingo-letter';
+    span.textContent = ch;
+    bingoLetters.appendChild(span);
+  }
 }
 
-initGame(5);
+function updateLetters(lines) {
+  bingoLetters.querySelectorAll('.bingo-letter')
+    .forEach((el, i) => el.classList.toggle('lit', i < lines));
+}
+
+function getLines(grid, marked, size) {
+  const ok = n => marked.has(n);
+  const lines = [];
+  for (let r = 0; r < size; r++)
+    if (grid[r].every(ok)) lines.push({ type: 'row', index: r });
+  for (let c = 0; c < size; c++)
+    if (grid.every(row => ok(row[c]))) lines.push({ type: 'col', index: c });
+  if (grid.every((row, i) => ok(row[i])))
+    lines.push({ type: 'diag', index: 0 });
+  if (grid.every((row, i) => ok(row[size - 1 - i])))
+    lines.push({ type: 'diag', index: 1 });
+  return lines;
+}
+
+function getCellsInLines(lines, size) {
+  const cells = new Set();
+  for (const ln of lines) {
+    if (ln.type === 'row')                    for (let c = 0; c < size; c++) cells.add(`${ln.index},${c}`);
+    if (ln.type === 'col')                    for (let r = 0; r < size; r++) cells.add(`${r},${ln.index}`);
+    if (ln.type === 'diag' && ln.index === 0) for (let i = 0; i < size; i++) cells.add(`${i},${i}`);
+    if (ln.type === 'diag' && ln.index === 1) for (let i = 0; i < size; i++) cells.add(`${i},${size - 1 - i}`);
+  }
+  return cells;
+}
+
+function renderBoard(popNum = null) {
+  const { grid, marked, size, mode } = state;
+  const needed = mode === 'bingo' ? 5 : 6;
+  const completedLines = getLines(grid, marked, size);
+  const completeCells  = getCellsInLines(completedLines, size);
+  const lineCount      = completedLines.length;
+
+  boardEl.innerHTML = '';
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const num = grid[r][c];
+      const key = `${r},${c}`;
+      const div = document.createElement('div');
+      div.className = 'cell';
+      div.textContent = num;
+      if (marked.has(num))        div.classList.add('marked');
+      if (completeCells.has(key)) div.classList.add('complete-cell');
+      if (num === popNum)         div.classList.add('pop');
+      div.addEventListener('click', () => onCellClick(num));
+      boardEl.appendChild(div);
+    }
+  }
+
+  updateLetters(lineCount);
+
+  const pct = Math.min((lineCount / needed) * 100, 100);
+  progressBar.style.setProperty('--p', pct + '%');
+  progressText.textContent = `${lineCount} / ${needed} lines completed`;
+  statMarked.textContent = marked.size;
+  statLines.textContent  = lineCount;
+  statNeeded.textContent = needed;
+
+  if (!state.won && lineCount >= needed) {
+    state.won = true;
+    const word = WORD_MAP[mode];
+    winTitle.textContent    = word + '!';
+    winSubtitle.textContent = `All ${needed} lines completed! 🎊`;
+    setTimeout(() => winBanner.classList.remove('hidden'), 500);
+  }
+}
+
+function onCellClick(num) {
+  if (state.won) return;
+  if (state.marked.has(num)) {
+    undoNum.textContent = num;
+    undoModal.classList.remove('hidden');
+    undoYes.onclick = () => {
+      undoModal.classList.add('hidden');
+      state.marked.delete(num);
+      renderBoard();
+    };
+    undoNo.onclick = () => undoModal.classList.add('hidden');
+  } else {
+    state.marked.add(num);
+    renderBoard(num);
+  }
+}
+
+function newGame() {
+  state.grid   = buildGrid(state.size);
+  state.marked = new Set();
+  state.won    = false;
+  winBanner.classList.add('hidden');
+  applyCellSize(state.size);
+  buildLetters(state.mode);
+  renderBoard();
+}
+
+document.querySelectorAll('.size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.size = parseInt(btn.dataset.size, 10);
+    newGame();
+  });
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    newGame();
+  });
+});
+
+document.getElementById('newGameBtn').addEventListener('click', newGame);
+document.getElementById('playAgainBtn').addEventListener('click', newGame);
+undoModal.addEventListener('click', e => { if (e.target === undoModal) undoModal.classList.add('hidden'); });
+window.addEventListener('resize', () => applyCellSize(state.size));
+
+newGame();
